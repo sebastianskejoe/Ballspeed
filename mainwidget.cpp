@@ -35,6 +35,9 @@ MainWidget::~MainWidget()
 /*
  * Slots
  */
+/**
+ * Load video
+ */
 void MainWidget::on_loadVideoButton_clicked() {
     QString path = QFileDialog::getOpenFileName(this, tr("Open File"), QString(), QString("Movies (*.avi *.MOV *.mp4)"));
     if (path == "") {
@@ -44,14 +47,23 @@ void MainWidget::on_loadVideoButton_clicked() {
     loadPath(path.toStdString());
 }
 
+/**
+ * Change diameter of hough search area and initial template search area
+ */
 void MainWidget::on_diameter_valueChanged(int diam) {
     mDiameter = diam;
 }
 
+/**
+ * Change hough threshold value
+ */
 void MainWidget::on_houghThreshold_valueChanged(int val) {
     mHough->setThreshold(val);
 }
 
+/**
+ * Handle clicks on the frame
+ */
 void MainWidget::on_frame_clicked(QMouseEvent *me) {
     QPoint pt;
     Subimage sub;
@@ -91,6 +103,9 @@ void MainWidget::on_frame_clicked(QMouseEvent *me) {
     }
 }
 
+/**
+ * Do ball matching in current frame
+ */
 void MainWidget::on_matchTemplate_clicked() {
     MatchResult res, cal;
     QPoint pt;
@@ -108,6 +123,9 @@ void MainWidget::on_matchTemplate_clicked() {
     std::cout << "#" << mCur << ": match(" << res.pt.x() << "," << res.pt.y() << ") calibrated(" << pt.x() << ", " << pt.y() << ") value = " << res.value << std::endl;
 }
 
+/**
+ * Do ball matching in all frames
+ */
 void MainWidget::on_matchAllBalls_clicked() {
     int i, tmpl;
     MatchResult res, cal;
@@ -133,31 +151,41 @@ void MainWidget::on_matchAllBalls_clicked() {
     }
 }
 
-// Go to first frame
+/**
+ * Go to first frame
+ */
 void MainWidget::on_firstFrame_clicked() {
     mCur = 0;
     ui->frameEdit->setText(QString::number(mCur));
 }
 
-// Go to last frame
+/**
+ * Go to last frame
+ */
 void MainWidget::on_lastFrame_clicked() {
     mCur = mFrameCount-1;
     ui->frameEdit->setText(QString::number(mCur));
 }
 
-// Go to next frame
+/**
+ * Go to next frame
+ */
 void MainWidget::on_nextFrame_clicked() {
     mCur++;
     ui->frameEdit->setText(QString::number(mCur));
 }
 
-// Go to previous frame
+/**
+ * Go to previous frame
+ */
 void MainWidget::on_prevFrame_clicked() {
     mCur--;
     ui->frameEdit->setText(QString::number(mCur));
 }
 
-// Calculates and prints the ball speed between each matched frame
+/**
+ * Calculates and prints the ball speed between each matched frame
+ */
 void MainWidget::on_calculateSpeed_clicked() {
     float mpp, speed, speedX, speedY;
     float diameter, goalheight;
@@ -196,16 +224,17 @@ void MainWidget::on_calculateSpeed_clicked() {
             }
         }
 
+        // Find difference in goal post heights
         float diff, diff1, diff2;
         diff1 = (float)mCalibrationTmpl[0].offset().y()-(float)mCalibrationTmpl[pair1.y()].offset().y();
         diff2 = (float)mCalibrationTmpl[pair2.x()].offset().y()-(float)mCalibrationTmpl[pair2.y()].offset().y();
-        diff = (fabs(diff1)+fabs(diff2))/2; // Goal is in the middle of the goal
+        diff = (fabs(diff1)+fabs(diff2))/2; // XXX: Ball is placed in the middle of the goal
 
         // Calculate goal height in pixels
         mpp = ((float)goalheight)/diff;
         std::cout << "Ball calc: " << ((float)diameter)/(float)mTmpl.width() << std::endl;
         std::cout << "Goal height (px): " << diff << std::endl;
-    } else {
+    } else { // Use ball diameter instead
         mpp = ((float)diameter)/(float)mTmpl.width();
     } 
     std::cout << "Meters per pixel: " << mpp << std::endl << "Template width: " << (float)mTmpl.width() << std::endl;
@@ -245,6 +274,17 @@ Subimage MainWidget::getSubimage(QPoint pos, int diameter) {
     return getSubimage(pos, mCur, diameter);
 }
 
+/**
+ * Return a rectangular subimage of a given frame.
+ * If adjust is true, the function will automatically adjust the boundaries of the subimage 
+ * to boundaries of the frame. If adjust is false and the boundaries exceed the boundaries of the
+ * frame, an empty subimage will be returned.
+ * @param pos Center point of subimage
+ * @param frame Frame number
+ * @param diameter Intented width/height of subimage
+ * @param filled Filled is set to true if the subimage fills the subimage
+ * @param adjust Indicates whether the subimage boundaries should be adjusted to the frame boundaries
+ */
 Subimage MainWidget::getSubimage(QPoint pos, int frame, int diameter, bool *filled, bool adjust) {
     int adjs = 0; // number of adjustments
     cv::Mat mat, omat;
@@ -301,6 +341,9 @@ Subimage MainWidget::getSubimage(QPoint pos, int frame, int diameter, bool *fill
     return Subimage(omat, pos);
 }
 
+/**
+ * Matches the ball template against frame #i
+ */
 MatchResult MainWidget::matchBallFrame(int i) {
     Subimage sub;
     MatchResult res = {QPoint(), 0, false}, mr;
@@ -341,6 +384,9 @@ MatchResult MainWidget::matchBallFrame(int i) {
     return res;
 }
 
+/**
+ * Matches calibration template #tmpl against frame #i
+ */
 MatchResult MainWidget::matchCalibration(int tmpl, int i) {
     MatchResult res, prev;
     QPoint pt;
@@ -374,7 +420,10 @@ MatchResult MainWidget::matchCalibration(int tmpl, int i) {
     return res;
 }
 
-    // Open video
+/**
+ * Load video
+ * XXX: Gives wrong frame count with some videos and needs to check framerate
+ */
 void MainWidget::loadPath(std::string path) {
     // Try to open path
     mVidcap.open(path);
@@ -396,7 +445,10 @@ void MainWidget::loadPath(std::string path) {
 }
 
 
-// Returns the calibrated point for the given frame
+/**
+ * Returns the calibrated point for the given frame
+ * XXX: Not used right now
+ */
 QPoint MainWidget::getCalibratedPoint(int frame) {
     MatchResult mr, cal, first;
 
@@ -418,6 +470,10 @@ QPoint MainWidget::getCalibratedPoint(int frame) {
     return mr.pt;
 }
 
+/**
+ * Match all calibration templates and return the translation needed to calibrate
+ * XXX: Calculate translation
+ */
 QPoint MainWidget::getCalibration(int frame) {
     MatchResult cal;
     QPoint pt;
