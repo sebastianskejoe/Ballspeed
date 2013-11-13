@@ -8,6 +8,7 @@
 
 #include "template.h"
 #include "hough.h"
+#include "logger.h"
 
 namespace Ui {
     class BallspeedUI;
@@ -42,6 +43,7 @@ protected:
     cv::VideoCapture mVidcap;
     int mCur, mFrameCount;
     int mDiameter;
+    Logger *mLogger;
 
     QVector<MatchResult> mBallMatches;
     QVector< QVector<MatchResult> > mCalibrations;

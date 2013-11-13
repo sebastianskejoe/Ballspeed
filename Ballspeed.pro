@@ -10,6 +10,6 @@ INCLUDEPATH += /usr/include/opencv
 LIBS += `pkg-config --libs opencv`
 
 # Input
-HEADERS += mainwidget.h template.h ui_ui.h videoframe.h hough.h subimage.h
+HEADERS += mainwidget.h template.h ui_ui.h videoframe.h hough.h subimage.h logger.h
 FORMS += ui.ui
-SOURCES += main.cpp mainwidget.cpp template.cpp videoframe.cpp hough.cpp subimage.cpp
+SOURCES += main.cpp mainwidget.cpp template.cpp videoframe.cpp hough.cpp subimage.cpp logger.cpp

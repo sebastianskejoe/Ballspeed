@@ -8,7 +8,6 @@ TemplateMatcher::TemplateMatcher(Subimage tmpl) {
 
 void TemplateMatcher::setTemplate(Subimage tmpl) {
     mTmpl = tmpl;
-    std::cout << "Setting template" << std::endl;
 }
 
 MatchResult TemplateMatcher::match(Subimage img) {

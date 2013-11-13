@@ -148,6 +148,7 @@ void MainWidget::on_matchAllBalls_clicked() {
 
         pt = getCalibratedPoint(i);
         std::cout << "#" << i << ": match(" << res.pt.x() << "," << res.pt.y() << ") calibrated(" << pt.x() << ", " << pt.y() << ") value = " << res.value << std::endl;
+        mLogger->printFrame(i);
     }
 }
 
@@ -351,6 +352,10 @@ MatchResult MainWidget::matchBallFrame(int i) {
     int diam;
     bool filled = false;
 
+    // Start logging
+    mLogger->setCurrentFrame(i);
+    mLogger->startMatching();
+
     // Find where to search
     for (diam = mDiameter; !filled; diam *= 2) {
         hr = mHoughResults.at(i);
@@ -369,6 +374,9 @@ MatchResult MainWidget::matchBallFrame(int i) {
             break;
         }
 
+        // Log it
+        mLogger->addIteration(sub.offset(), sub.width(), sub.height());
+
         // Match it
         ui->hough->setPixmap(QPixmap::fromImage(sub.toImage()));
         res = mMatcher->match(sub);
@@ -380,6 +388,7 @@ MatchResult MainWidget::matchBallFrame(int i) {
 
         break;
     }
+    mLogger->stopMatching();
 
     return res;
 }
@@ -442,6 +451,9 @@ void MainWidget::loadPath(std::string path) {
     MatchResult match = {QPoint(), 0.0, false};
     mHoughResults.fill(dummy, mFrameCount);
     mBallMatches.fill(match, mFrameCount);
+
+    // Create logger
+    mLogger = new Logger(mFrameCount);
 }
 
 
