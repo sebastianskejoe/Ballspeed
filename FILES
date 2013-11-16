@@ -1,0 +1,22 @@
+mainwidget.cpp, mainwidget.h:
+    Class definition and implementation for the application widget.
+    All glue between interface and HoughDetector/TemplateMatcher lives here.
+    Also has helpers to get a subimage and calculate calibration.
+
+hough.cpp, hough.h:
+    Definition and implementation of HoughDetector, which is the class, that
+    performs hough transformation.
+    Implemented using openCV.
+
+template.cpp, template.h:
+    Definition and implementation of TemplateMatcher, which is the class that
+    handles matching of templates.
+    Implemented using openCV.
+
+videoframe.cpp, videoframe.h:
+    Definition and implementation of the video widget.
+
+subimage.cpp, subimage.h:
+    Definition and implementation of Subimage, which is the class, that is used
+    to store only parts of a video frame. Converts between cv::Mat and QImage
+    and stores offset in the original frame.

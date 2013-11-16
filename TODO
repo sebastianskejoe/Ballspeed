@@ -1,0 +1,7 @@
+TODO
+========
+- Calculate calibration
+- Draw calibration points
+- Move matching window instead of just enlargen
+- Fix video loading
+- (split out getSubimage from mainwidget)
