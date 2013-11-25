@@ -110,8 +110,10 @@ void VideoFrame::drawCalibration(QPainter *painter) {
             pt = QPoint(img.offset().x()+img.width()/2, img.offset().y()+img.width()/2);
             cals.append(MatchResult{pt, 255, 1});
         }
-    } else if (mParent->mCalibrationTmpl.size() >= mParent->mCur+1) {
-//        cals = mParent->mCalibrationTmpl.at(mParent->mCur+1);
+    } else if (!mParent->mCalibrations.isEmpty() && mParent->mCalibrations.first().size() >= mParent->mCur+1) {
+        for (i = 0; i < mParent->mCalibrations.size(); i++) {
+            cals.append(mParent->mCalibrations[i][mParent->mCur]);
+        }
     } else {
         return;
     }
