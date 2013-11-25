@@ -9,6 +9,7 @@
 #include <QRgb>
 #include <cmath>
 #include <cstdio>
+#include <sstream>
 
 #define WITHIN(a,b,c) b-c < a && a < b+c
 
@@ -45,6 +46,7 @@ void MainWidget::on_loadVideoButton_clicked() {
     }
     ui->videoPath->setText(path);
     loadPath(path.toStdString());
+    mLogger->setCurrentFrame(0);
 }
 
 /**
@@ -150,6 +152,7 @@ void MainWidget::on_matchAllBalls_clicked() {
         std::cout << "#" << i << ": match(" << res.pt.x() << "," << res.pt.y() << ") calibrated(" << pt.x() << ", " << pt.y() << ") value = " << res.value << std::endl;
         mLogger->printFrame(i);
     }
+    mLogger->printTotalTime();
 }
 
 /**
@@ -300,32 +303,42 @@ Subimage MainWidget::getSubimage(QPoint pos, int frame, int diameter, bool *fill
     mVidcap.set(CV_CAP_PROP_POS_FRAMES, frame);
     mVidcap.read(mat);
 
+    // Boundaries
+    int left = 0 > pos.x()-mDiameter*2 ? 0 : pos.x()-mDiameter*2; // min of 0 and center.x-mDiameter
+    int top = 0;
+    int right = mat.cols;
+    int bottom = mat.rows < pos.y()+mDiameter*2 ? mat.rows : pos.y()+mDiameter*2; // max of image height and center.y+mDiameter
+    std::stringstream s;
+    s << "Boundaries: (" << left << ", " << top << ") , (" << right << ", " << bottom << ")";
+    mLogger->addMessage(s.str());
+
     // Translate pos to upper left corner
     pos -= QPoint(diameter/2, diameter/2);
     rect = cv::Rect(pos.x(), pos.y(), diameter, diameter);
 
+
     // Check if subrect is within bounds
-    if (pos.x() < 0 || pos.x()+diameter > mat.cols ||
-        pos.y() < 0 || pos.y()+diameter > mat.rows) {
+    if (pos.x() < left || pos.x()+diameter > right ||
+        pos.y() < top || pos.y()+diameter > bottom) {
         if (!adjust && filled != 0) {
             *filled = true;
             return Subimage();
         } else {
             // Adjust sub image
-            if (pos.x() < 0) { // Left bound
+            if (pos.x() < left) { // Left bound
                 rect.x = 0;
                 adjs++;
             }
-            if (pos.y() < 0) { // Upper bound
+            if (pos.y() < top) { // Upper bound
                 rect.y = 0;
                 adjs++;
             }
-            if (rect.x+diameter > mat.cols) { // Right bound
-                rect.width = mat.cols-rect.x;
+            if (rect.x+diameter > right) { // Right bound
+                rect.width = right-rect.x;
                 adjs++;
             }
-            if (rect.y+diameter > mat.rows) { // Lower bound
-                rect.height = mat.rows-rect.y;
+            if (rect.y+diameter > bottom) { // Lower bound
+                rect.height = bottom-rect.y;
                 adjs++;
             }
 
