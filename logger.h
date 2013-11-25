@@ -15,6 +15,8 @@ public:
     void setHough(bool);
     void startHough();
     void stopHough();
+    void addMessage(std::string);
+    void printTotalTime();
     void printFrame(int);
 
 private:
@@ -29,6 +31,7 @@ private:
         // Hough timing
         QTime houghTimer;
         int houghTime;
+        QVector<std::string> messages;
     };
 
     QVector<FrameStats> mFrames;
