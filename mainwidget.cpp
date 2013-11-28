@@ -310,7 +310,7 @@ Subimage MainWidget::getSubimage(QPoint pos, int frame, int diameter, bool *fill
     int bottom = mat.rows < pos.y()+mDiameter*2 ? mat.rows : pos.y()+mDiameter*2; // max of image height and center.y+mDiameter
     std::stringstream s;
     s << "Boundaries: (" << left << ", " << top << ") , (" << right << ", " << bottom << ")";
-    mLogger->addMessage(s.str());
+//    mLogger->addMessage(s.str());
 
     // Translate pos to upper left corner
     pos -= QPoint(diameter/2, diameter/2);
@@ -362,45 +362,63 @@ MatchResult MainWidget::matchBallFrame(int i) {
     Subimage sub;
     MatchResult res = {QPoint(), 0, false}, mr;
     HoughResult hr;
-    int diam;
+    int diameter = mDiameter, runs;
     bool filled = false;
+    QPoint center;
 
     // Start logging
     mLogger->setCurrentFrame(i);
     mLogger->startMatching();
 
-    // Find where to search
-    for (diam = mDiameter; !filled; diam *= 2) {
-        hr = mHoughResults.at(i);
+    // Find center
+    hr = mHoughResults.at(i);
+    if (i >= 1) {
+        mr = mBallMatches.at(i-1);
+    }
 
-        // Try to get MatchResult from previous frame
-        if (i >= 1) {
-            mr = mBallMatches.at(i-1);
+    if (i-1 >= 0 && mr.found) {
+        center = mr.pt;
+    } else if (hr.found) {
+        center = hr.pt;
+    } else {
+        // XXX Handle error
+        center = QPoint(0,0);
+    }
+
+    // First try to move the search window
+    if (ui->moveWindow->isChecked()) {
+        for (runs = 0; runs < 2; runs++) {
+            sub = getSubimage(center, i, diameter, &filled, true);
+            res = mMatcher->match(sub);
+
+            ui->hough->setPixmap(QPixmap::fromImage(sub.toImage()));
+            mLogger->addIteration(sub.offset(), sub.width(), sub.height());
+
+            // If value is less than 0.80 it probably isn't a proper match, try in a bigger area
+            if (res.value > 0.80) {
+                filled = true; // Do this avoid running the next loop
+                break;
+            }
+
+            center += QPoint(3*mDiameter, 0);
         }
+        diameter *= 2;
+    }
 
-        // If we have a MatchResult from previous frame, use that to set subimage area
-        if (i-1 >= 0 && mr.found) {
-            sub = getSubimage(mr.pt, i, diam, &filled, true);
-        } else if (hr.found) { // Else use hough results if possible
-            sub = getSubimage(hr.pt, i, diam, &filled, true);
-        } else { // Otherwise we have no good guess - break XXX
-            break;
-        }
-
-        // Log it
-        mLogger->addIteration(sub.offset(), sub.width(), sub.height());
-
-        // Match it
-        ui->hough->setPixmap(QPixmap::fromImage(sub.toImage()));
+    // Make search window bigger if there's no match
+    for (; !filled; diameter *= 2) {
+        sub = getSubimage(center, i, diameter, &filled, true);
         res = mMatcher->match(sub);
 
-        // If value is less than 0.80 it probably isn't a proper match, try in a bigger area
-        if (res.value < 0.80) {
-            continue;
-        }
+        ui->hough->setPixmap(QPixmap::fromImage(sub.toImage()));
+        mLogger->addIteration(sub.offset(), sub.width(), sub.height());
 
-        break;
+        // If value is less than 0.80 it probably isn't a proper match, try in a bigger area
+        if (res.value > 0.80) {
+            break;
+        }
     }
+
     mLogger->stopMatching();
 
     return res;

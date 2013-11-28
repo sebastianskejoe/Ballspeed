@@ -128,6 +128,17 @@
                         </widget>
                     </item>
                     <item>
+                        <widget class="QLabel" name="moveWindowLabel">
+                            <property name="text">
+                                <string>Move search window</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item>
+                        <widget class="QCheckBox" name="moveWindow">
+                        </widget>
+                    </item>
+                    <item>
                         <widget class="QLabel" name="templateLabel">
                             <property name="text">
                                 <string>Template</string>
